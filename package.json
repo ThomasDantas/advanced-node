@@ -1,0 +1,29 @@
+{
+  "name": "advanced-node",
+  "version": "1.0.0",
+  "description": "curso udemy rodrigo manguinho",
+  "main": "index.js",
+  "scripts": {
+    "build": "rimraf dist && tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThomasDantas/advanced-node.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThomasDantas/advanced-node/issues"
+  },
+  "homepage": "https://github.com/ThomasDantas/advanced-node#readme",
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  },
+  "engines": {
+    "node": "16.x"
+  },
+  "dependencies": {
+    "rimraf": "^3.0.2"
+  }
+}
