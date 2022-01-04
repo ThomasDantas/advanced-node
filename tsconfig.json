@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es2021",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
-    "rootDir": "src",                                  /* Specify the root folder within your source files. */
-    "sourceMap": true,                                /* Create source map files for emitted JavaScript files. */
-    "outDir": "dist",                                   /* Specify an output folder for all emitted files. */
-    "forceConsistentCasingInFileNames": true,            /* Ensure that casing is correct in imports. */
-    "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
+    "target": "es2021",
+    "rootDir": "src",
+    "sourceMap": true,
+    "outDir": "dist",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@/tests/*": ["../tests/*"]
+    }
   },
   "include": ["src"]
 }
