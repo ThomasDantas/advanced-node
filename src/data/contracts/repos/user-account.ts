@@ -26,5 +26,7 @@ export namespace SaveFacebookAccountRepository {
     email: string
   }
 
-  export type Result = undefined
+  export type Result = {
+    id: string
+  }
 }
