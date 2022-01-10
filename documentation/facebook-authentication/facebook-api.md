@@ -15,5 +15,5 @@
 > ## User Info
 * Request to https://graph.facebook.com/USER_ID
 * Verb GET
-* Params: fields (id, name, email), access_token (client)
+* Params: fields (id,name,email), access_token (client)
 * Result: { id, name, email }
