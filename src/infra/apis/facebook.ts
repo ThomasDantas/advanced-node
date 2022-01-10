@@ -19,6 +19,7 @@ type UserInfo = {
 
 export class FacebookApi {
   private readonly baseUrl = 'https://graph.facebook.com'
+
   constructor (
     private readonly httpClient: HttpGetClient,
     private readonly clientId: string,
