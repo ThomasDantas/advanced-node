@@ -1,37 +1,33 @@
 import { FacebookAuthentication } from '@/domain/features'
-import { HttpResponse } from '@/application/helpers'
+import { HttpResponse, ok, badRequest, unauthorized, serverError } from '@/application/helpers'
 import { AccessToken } from '@/domain/models'
-import { ServerError } from '@/application/errors'
+import { RequiredFieldError } from '@/application/errors'
+
+type HttpRequest = {
+  token: string | undefined | null
+}
+
+type Model = Error | {
+  accessToken: string
+}
 
 export class FacebookLoginController {
   constructor (private readonly fbAuth: FacebookAuthentication) {}
 
-  async handle (httpRequest: any): Promise<HttpResponse> {
+  async handle (httpRequest: HttpRequest): Promise<HttpResponse<Model>> {
     try {
       if (httpRequest.token === '' || httpRequest.token === null || httpRequest.token === undefined) {
-        return {
-          statusCode: 400,
-          data: new Error('The filed token is required')
-        }
+        return badRequest(new RequiredFieldError('token'))
       }
 
-      const result = await this.fbAuth.perform({ token: httpRequest.token })
-      if (result instanceof AccessToken) {
-        return {
-          statusCode: 200,
-          data: { accessToken: result.value }
-        }
+      const accessToken = await this.fbAuth.perform({ token: httpRequest.token })
+      if (accessToken instanceof AccessToken) {
+        return ok({ accessToken: accessToken.value })
       } else {
-        return {
-          statusCode: 401,
-          data: result
-        }
+        return unauthorized()
       }
     } catch (error: any) {
-      return {
-        statusCode: 500,
-        data: new ServerError(error)
-      }
+      return serverError(error)
     }
   }
 }
