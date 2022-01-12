@@ -1,10 +1,10 @@
 import { FacebookAuthentication } from '@/domain/features'
 import { HttpResponse, ok, badRequest, unauthorized, serverError } from '@/application/helpers'
 import { AccessToken } from '@/domain/models'
-import { RequiredFieldError } from '@/application/errors'
+import { RequiredStringValidator } from '../validation/required-string'
 
 type HttpRequest = {
-  token: string | undefined | null
+  token: string
 }
 
 type Model = Error | {
@@ -16,8 +16,9 @@ export class FacebookLoginController {
 
   async handle (httpRequest: HttpRequest): Promise<HttpResponse<Model>> {
     try {
-      if (httpRequest.token === '' || httpRequest.token === null || httpRequest.token === undefined) {
-        return badRequest(new RequiredFieldError('token'))
+      const error = this.validade(httpRequest)
+      if (error !== undefined) {
+        return badRequest(error)
       }
 
       const accessToken = await this.fbAuth.perform({ token: httpRequest.token })
@@ -29,5 +30,10 @@ export class FacebookLoginController {
     } catch (error: any) {
       return serverError(error)
     }
+  }
+
+  private validade (httpRequest: HttpRequest): Error | undefined {
+    const validator = new RequiredStringValidator(httpRequest.token, 'token')
+    return validator.validate()
   }
 }
