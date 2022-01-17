@@ -2,14 +2,14 @@ import { LoadFacebookUserApi } from '@/domain/contracts/apis/facebook'
 import { TokenGenerator } from '@/domain/contracts/crypto'
 import { FacebookAuthentication, setupFacebookAuthentication } from '@/domain/use-cases'
 import { LoadUserAccountRepository, SaveFacebookAccountRepository } from '@/domain/contracts/repos'
-import { AuthenticationError } from '@/domain/models/errors'
-import { FacebookAccount } from '@/domain/models/facebook-account'
-import { AccessToken } from '@/domain/models/access-token'
+import { AuthenticationError } from '@/domain/entities/errors'
+import { FacebookAccount } from '@/domain/entities/facebook-account'
+import { AccessToken } from '@/domain/entities/access-token'
 
 import { mocked } from 'ts-jest/utils'
 import { mock, MockProxy } from 'jest-mock-extended'
 
-jest.mock('@/domain/models/facebook-account')
+jest.mock('@/domain/entities/facebook-account')
 
 describe('FacebookAuthentication', () => {
   let facebookApi: MockProxy<LoadFacebookUserApi>
@@ -44,11 +44,11 @@ describe('FacebookAuthentication', () => {
     expect(facebookApi.loadUser).toHaveBeenCalledTimes(1)
   })
 
-  it('should return AuthenticationError when LoadFacebookUserApiSpy returns undefined', async () => {
+  it('should throw AuthenticationError when LoadFacebookUserApiSpy returns undefined', async () => {
     facebookApi.loadUser.mockResolvedValueOnce(undefined)
-    const authResult = await sut({ token })
+    const promise = sut({ token })
 
-    expect(authResult).toEqual(new AuthenticationError())
+    await expect(promise).rejects.toThrow(new AuthenticationError())
   })
 
   it('should call LoadUserAccountRepo when LoadFacebookUserAPi returns data', async () => {
@@ -77,7 +77,7 @@ describe('FacebookAuthentication', () => {
   it('should return an AccessToken on success', async () => {
     const authResult = await sut({ token })
 
-    expect(authResult).toEqual(new AccessToken('any_generated_token'))
+    expect(authResult).toEqual({ accessToken: 'any_generated_token' })
   })
 
   it('should rethrow if LoadFacebookUserApi throws', async () => {

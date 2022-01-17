@@ -1,5 +1,5 @@
 import { makeFacebookLoginController } from '@/main/factories/controllers'
-import { adaptExpressRoute as adapt } from '@/infra/http/express-router'
+import { adaptExpressRoute as adapt } from '@/main/adapters'
 
 import { Router } from 'express'
 
