@@ -1,8 +1,8 @@
-import { LoadFacebookUserApi } from '@/data/contracts/apis/facebook'
-import { TokenGenerator } from '@/data/contracts/crypto'
-import { FacebookAuthenticationService } from '@/data/contracts/services'
-import { LoadUserAccountRepository, SaveFacebookAccountRepository } from '@/data/contracts/repos'
-import { AuthenticationError } from '@/domain/errors'
+import { LoadFacebookUserApi } from '@/domain/contracts/apis/facebook'
+import { TokenGenerator } from '@/domain/contracts/crypto'
+import { FacebookAuthenticationUseCase } from '@/domain/use-cases'
+import { LoadUserAccountRepository, SaveFacebookAccountRepository } from '@/domain/contracts/repos'
+import { AuthenticationError } from '@/domain/models/errors'
 import { FacebookAccount } from '@/domain/models/facebook-account'
 import { AccessToken } from '@/domain/models/access-token'
 
@@ -11,11 +11,11 @@ import { mock, MockProxy } from 'jest-mock-extended'
 
 jest.mock('@/domain/models/facebook-account')
 
-describe('FacebookAuthenticationService', () => {
+describe('FacebookAuthenticationUseCase', () => {
   let facebookApi: MockProxy<LoadFacebookUserApi>
   let crypto: MockProxy<TokenGenerator>
   let userAccountRepo: MockProxy<LoadUserAccountRepository & SaveFacebookAccountRepository >
-  let sut: FacebookAuthenticationService
+  let sut: FacebookAuthenticationUseCase
   let token: string
 
   beforeAll(() => {
@@ -34,7 +34,7 @@ describe('FacebookAuthenticationService', () => {
   })
 
   beforeEach(() => {
-    sut = new FacebookAuthenticationService(facebookApi, userAccountRepo, crypto)
+    sut = new FacebookAuthenticationUseCase(facebookApi, userAccountRepo, crypto)
   })
 
   it('should call LoadFacebookUserApiSpy with correct params', async () => {
