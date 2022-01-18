@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig-build.json",
-    "start": "node dist/main",
+    "start": "node -r dotenv/config dist/main",
+    "dev": "ts-node-dev --respawn --transpile-only -r dotenv/config --inspect=0.0.0.0:9229 src/main",
     "lint": "eslint .",
     "prepare": "husky install",
     "lint:fix": "npm run lint -- --fix",
@@ -49,6 +50,7 @@
     "pg-mem": "^2.2.0",
     "supertest": "^6.2.1",
     "ts-jest": "^27.1.2",
+    "ts-node-dev": "^1.1.8",
     "typescript": "^4.5.4"
   },
   "engines": {
