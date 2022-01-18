@@ -1,24 +1,9 @@
-import { HttpResponse } from '@/application/helpers/http'
+import { Middleware } from '@/application/middlewares'
+import { adaptExpressMiddleware } from '@/main/adapters'
 
 import { Request, Response, RequestHandler, NextFunction } from 'express'
 import { getMockReq, getMockRes } from '@jest-mock/express'
 import { mock, MockProxy } from 'jest-mock-extended'
-
-const adaptExpressMiddleware: Adapter = middleware => async (req, res, next) => {
-  const { statusCode, data } = await middleware.handle({ ...req.headers })
-  if (statusCode === 200) {
-    req.locals = { ...req.locals, ...data }
-    next()
-  } else {
-    res.status(statusCode).json(data)
-  }
-}
-
-type Adapter = (middleware: Middleware) => RequestHandler
-
-interface Middleware {
-  handle: (httpRequest: any) => Promise<HttpResponse>
-}
 
 describe('ExpressMiddleware', () => {
   let req: Request
@@ -34,7 +19,12 @@ describe('ExpressMiddleware', () => {
     middleware = mock()
     middleware.handle.mockResolvedValue({
       statusCode: 200,
-      data: { data: 'any_data' }
+      data: {
+        emptyProp: '',
+        nullProp: null,
+        undefinedProp: undefined,
+        prop: 'any_value'
+      }
     })
   })
 
@@ -72,10 +62,10 @@ describe('ExpressMiddleware', () => {
     expect(res.json).toHaveBeenCalledTimes(1)
   })
 
-  it('should add data to req.locals', async () => {
+  it('should add valid data to req.locals', async () => {
     await sut(req, res, next)
 
-    expect(req.locals).toEqual({ data: 'any_data' })
+    expect(req.locals).toEqual({ prop: 'any_value' })
     expect(next).toHaveBeenCalledTimes(1)
   })
 })
