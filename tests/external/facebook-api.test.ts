@@ -14,7 +14,7 @@ describe('Facebook Api Integration Tests', () => {
     clientId = env.facebookApi.clientId
     clientSecret = env.facebookApi.clientSecret
     sut = new FacebookApi(axiosClient, clientId, clientSecret)
-    token = env.facebookApi.token
+    token = env.facebookApi.accessToken
   })
 
   it('should return a Facebook User if token is valid', async () => {
