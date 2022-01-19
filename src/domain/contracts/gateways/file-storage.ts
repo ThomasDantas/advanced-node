@@ -3,6 +3,6 @@ export interface UploadFile {
 }
 
 export namespace UploadFile {
-  export type Input = {file: Buffer, key: string}
+  export type Input = { file: Buffer, key: string }
   export type Output = string
 }
