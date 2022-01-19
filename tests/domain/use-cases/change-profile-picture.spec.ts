@@ -1,29 +1,8 @@
+import { UploadFile, UUIDGenerator } from '@/domain/contracts/gateways'
+import { SaveUserPicture } from '@/domain/contracts/repos'
+import { ChangeProfilePicture, setupChangeProfilePicture } from '@/domain/use-cases'
+
 import { mock, MockProxy } from 'jest-mock-extended'
-
-type Setup = (fileStorage: UploadFile, crypto: UUIDGenerator) => ChangeProfilePicture
-type Input = { id: string, file: Buffer }
-type ChangeProfilePicture = (input: Input) => Promise<void>
-
-export const setupChangeProfilePicture: Setup = (fileStorage, crypto) => async ({ id, file }) => {
-  await fileStorage.upload({ file, key: crypto.uuid({ key: id }) })
-}
-
-interface UploadFile {
-  upload: (input: UploadFile.Input) => Promise<void>
-}
-
-namespace UploadFile {
-  export type Input = {file: Buffer, key: string}
-}
-
-interface UUIDGenerator {
-  uuid: (input: UUIDGenerator.Input) => UUIDGenerator.Output
-}
-
-namespace UUIDGenerator {
-  export type Input = { key: string}
-  export type Output = string
-}
 
 describe('ChangeProfilePicture', () => {
   let sut: ChangeProfilePicture
@@ -31,22 +10,46 @@ describe('ChangeProfilePicture', () => {
   let fileStorage: MockProxy<UploadFile>
   let uuid: string
   let crypto: MockProxy<UUIDGenerator>
+  let userProfileRepo: MockProxy<SaveUserPicture>
 
   beforeAll(() => {
-    file = Buffer.from('any_buffer')
-    fileStorage = mock<UploadFile>()
-    crypto = mock<UUIDGenerator>()
     uuid = 'any_unique_id'
-    sut = setupChangeProfilePicture(fileStorage, crypto)
+    file = Buffer.from('any_buffer')
+    fileStorage = mock()
+    fileStorage.upload.mockResolvedValue('any_url')
+    crypto = mock()
+    crypto.uuid.mockReturnValueOnce(uuid)
+    userProfileRepo = mock()
   })
 
-  beforeEach(() => {})
+  beforeEach(() => {
+    sut = setupChangeProfilePicture(fileStorage, crypto, userProfileRepo)
+  })
 
   it('should call UploadFile with correct input', async () => {
-    crypto.uuid.mockReturnValueOnce(uuid)
     await sut({ id: 'any_id', file })
 
     expect(fileStorage.upload).toHaveBeenCalledWith({ file, key: uuid })
     expect(fileStorage.upload).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not call UploadFile when file is undefined', async () => {
+    await sut({ id: 'any_id', file: undefined })
+
+    expect(fileStorage.upload).not.toHaveBeenCalled()
+  })
+
+  it('should call SaveUserPicture with correct input', async () => {
+    await sut({ id: 'any_id', file })
+
+    expect(userProfileRepo.savePicture).toHaveBeenCalledWith({ pictureUrl: 'any_url' })
+    expect(userProfileRepo.savePicture).toHaveBeenCalledTimes(1)
+  })
+
+  it('should call SaveUserPicture with correct input when file is undefined', async () => {
+    await sut({ id: 'any_id', file: undefined })
+
+    expect(userProfileRepo.savePicture).toHaveBeenCalledWith({ pictureUrl: undefined })
+    expect(userProfileRepo.savePicture).toHaveBeenCalledTimes(1)
   })
 })
