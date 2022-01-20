@@ -1,4 +1,4 @@
-import { UploadFile, UUIDGenerator } from '@/domain/contracts/gateways'
+import { UploadFile, UUIDGenerator, DeleteFile } from '@/domain/contracts/gateways'
 import { LoadUserProfile, SaveUserPicture } from '@/domain/contracts/repos'
 import { ChangeProfilePicture, setupChangeProfilePicture } from '@/domain/use-cases'
 import { UserProfile } from '@/domain/entities/user-profile'
@@ -12,7 +12,7 @@ describe('ChangeProfilePicture', () => {
   let uuid: string
   let id: string
   let file: Buffer
-  let fileStorage: MockProxy<UploadFile>
+  let fileStorage: MockProxy<UploadFile & DeleteFile>
   let crypto: MockProxy<UUIDGenerator>
   let userProfileRepo: MockProxy<SaveUserPicture & LoadUserProfile>
   let sut: ChangeProfilePicture
@@ -24,7 +24,7 @@ describe('ChangeProfilePicture', () => {
     fileStorage = mock()
     fileStorage.upload.mockResolvedValue('any_url')
     crypto = mock()
-    crypto.uuid.mockReturnValueOnce(uuid)
+    crypto.uuid.mockReturnValue(uuid)
     userProfileRepo = mock()
     userProfileRepo.load.mockResolvedValue({ name: 'Any One Name' })
   })
@@ -64,5 +64,55 @@ describe('ChangeProfilePicture', () => {
     await sut({ id, file })
 
     expect(userProfileRepo.load).not.toHaveBeenCalled()
+  })
+
+  it('should return data on success', async () => {
+    mocked(UserProfile).mockImplementationOnce(id => ({
+      setPicture: jest.fn(),
+      id: 'any_id',
+      pictureUrl: 'any_url',
+      initials: 'any_initials'
+    }))
+
+    const result = await sut({ id, file })
+
+    expect(result).toMatchObject({
+      id: 'any_id',
+      pictureUrl: 'any_url',
+      initials: 'any_initials'
+    })
+  })
+
+  it('should call DeleteFile when file exists and SaveUserPicture throws', async () => {
+    userProfileRepo.savePicture.mockRejectedValueOnce(new Error())
+    expect.assertions(2)
+
+    const promise = sut({ id, file })
+
+    promise.catch(() => {
+      expect(fileStorage.delete).toHaveBeenCalledWith({ key: uuid })
+      expect(fileStorage.delete).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('should not call DeleteFile when file does not exists and SaveUserPicture throws', async () => {
+    userProfileRepo.savePicture.mockRejectedValueOnce(new Error())
+    expect.assertions(1)
+
+    const promise = sut({ id, file: undefined })
+
+    promise.catch(() => {
+      expect(fileStorage.delete).not.toHaveBeenCalled()
+    })
+  })
+
+  it('should rethrow if SaveUserPicture throws', async () => {
+    const error = new Error('save_error')
+    userProfileRepo.savePicture.mockRejectedValueOnce(error)
+    expect.assertions(1)
+
+    const promise = sut({ id, file: undefined })
+
+    await expect(promise).rejects.toThrow(error)
   })
 })
