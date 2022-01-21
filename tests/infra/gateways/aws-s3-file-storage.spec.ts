@@ -9,21 +9,14 @@ describe('AwsS3FileStorage', () => {
   let accessKeyId: string
   let secretAccessKey: string
   let key: string
-  let file: Buffer
   let bucket: string
   let sut: AwsS3FileStorage
-  let putObjectPromiseSpy: jest.Mock
-  let putObjectSpy: jest.Mock
 
   beforeAll(() => {
     accessKeyId = 'any_access_key'
     secretAccessKey = 'any_secret_access'
     key = 'any_key'
-    file = Buffer.from('any_buffer')
     bucket = 'any_bucket'
-    putObjectPromiseSpy = jest.fn()
-    putObjectSpy = jest.fn().mockImplementation(() => ({ promise: putObjectPromiseSpy }))
-    mocked(S3).mockImplementation(jest.fn().mockImplementation(() => ({ putObject: putObjectSpy })))
   })
 
   beforeEach(() => {
@@ -41,37 +34,81 @@ describe('AwsS3FileStorage', () => {
     expect(config.update).toHaveBeenCalledTimes(1)
   })
 
-  it('should call putObject with correct input', async () => {
-    await sut.upload({ key, file })
+  describe('upload', () => {
+    let file: Buffer
+    let putObjectPromiseSpy: jest.Mock
+    let putObjectSpy: jest.Mock
 
-    expect(putObjectSpy).toHaveBeenCalledWith({
-      Bucket: bucket,
-      Key: key,
-      Body: file,
-      ACL: 'public-read'
+    beforeAll(() => {
+      file = Buffer.from('any_buffer')
+      putObjectPromiseSpy = jest.fn()
+      putObjectSpy = jest.fn().mockImplementation(() => ({ promise: putObjectPromiseSpy }))
+      mocked(S3).mockImplementation(jest.fn().mockImplementation(() => ({ putObject: putObjectSpy })))
     })
-    expect(putObjectSpy).toHaveBeenCalledTimes(1)
-    expect(putObjectPromiseSpy).toHaveBeenCalledTimes(1)
+
+    it('should call putObject with correct input', async () => {
+      await sut.upload({ key, file })
+
+      expect(putObjectSpy).toHaveBeenCalledWith({
+        Bucket: bucket,
+        Key: key,
+        Body: file,
+        ACL: 'public-read'
+      })
+      expect(putObjectSpy).toHaveBeenCalledTimes(1)
+      expect(putObjectPromiseSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should return imageUrl', async () => {
+      const imagemUrl = await sut.upload({ key, file })
+
+      expect(imagemUrl).toBe(`https://${bucket}.s3.amazon.com/${key}`)
+    })
+
+    it('should return enconded imageUrl', async () => {
+      const imagemUrl = await sut.upload({ key: 'any key', file })
+
+      expect(imagemUrl).toBe(`https://${bucket}.s3.amazon.com/any%20key`)
+    })
+
+    it('should rethrow if putObject throws', async () => {
+      const error = new Error('upload_error')
+      putObjectPromiseSpy.mockRejectedValueOnce(error)
+
+      const promise = sut.upload({ key, file })
+
+      await expect(promise).rejects.toThrow(error)
+    })
   })
 
-  it('should return imageUrl', async () => {
-    const imagemUrl = await sut.upload({ key, file })
+  describe('delete', () => {
+    let deleteObjectPromiseSpy: jest.Mock
+    let deleteObjectSpy: jest.Mock
 
-    expect(imagemUrl).toBe(`https://${bucket}.s3.amazon.com/${key}`)
-  })
+    beforeAll(() => {
+      deleteObjectPromiseSpy = jest.fn()
+      deleteObjectSpy = jest.fn().mockImplementation(() => ({ promise: deleteObjectPromiseSpy }))
+      mocked(S3).mockImplementation(jest.fn().mockImplementation(() => ({ deleteObject: deleteObjectSpy })))
+    })
 
-  it('should return enconded imageUrl', async () => {
-    const imagemUrl = await sut.upload({ key: 'any key', file })
+    it('should call deleteObject with correct input', async () => {
+      await sut.delete({ key })
 
-    expect(imagemUrl).toBe(`https://${bucket}.s3.amazon.com/any%20key`)
-  })
+      expect(deleteObjectSpy).toHaveBeenCalledWith({
+        Bucket: bucket,
+        Key: key
+      })
+      expect(deleteObjectSpy).toHaveBeenCalledTimes(1)
+      expect(deleteObjectPromiseSpy).toHaveBeenCalledTimes(1)
+    })
 
-  it('should rethrow if putObject throws', async () => {
-    const error = new Error('upload_error')
-    putObjectPromiseSpy.mockRejectedValueOnce(error)
+    it('should rethrow if deleteObject throws', async () => {
+      const error = new Error('delete_error')
+      deleteObjectPromiseSpy.mockRejectedValueOnce(error)
 
-    const promise = sut.upload({ key, file })
+      const promise = sut.delete({ key })
 
-    await expect(promise).rejects.toThrow(error)
+      await expect(promise).rejects.toThrow(error)
+    })
   })
 })
