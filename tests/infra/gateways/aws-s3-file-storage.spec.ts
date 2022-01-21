@@ -1,34 +1,9 @@
-import { UploadFile } from '@/domain/contracts/gateways/file-storage'
+import { AwsS3FileStorage } from '@/infra/gateways'
 
 import { config, S3 } from 'aws-sdk'
 import { mocked } from 'ts-jest/utils'
 
 jest.mock('aws-sdk')
-
-export class AwsS3FileStorage {
-  constructor (
-    accessKeyId: string,
-    secretAccessKey: string,
-    private readonly bucket: string
-  ) {
-    config.update({
-      credentials: {
-        accessKeyId: accessKeyId,
-        secretAccessKey: secretAccessKey
-      }
-    })
-  }
-
-  async upload ({ key, file }: UploadFile.Input): Promise<void> {
-    const s3 = new S3()
-    await s3.putObject({
-      Bucket: this.bucket,
-      Key: key,
-      Body: file,
-      ACL: 'public-read'
-    }).promise()
-  }
-}
 
 describe('AwsS3FileStorage', () => {
   let accessKeyId: string
@@ -77,5 +52,26 @@ describe('AwsS3FileStorage', () => {
     })
     expect(putObjectSpy).toHaveBeenCalledTimes(1)
     expect(putObjectPromiseSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should return imageUrl', async () => {
+    const imagemUrl = await sut.upload({ key, file })
+
+    expect(imagemUrl).toBe(`https://${bucket}.s3.amazon.com/${key}`)
+  })
+
+  it('should return enconded imageUrl', async () => {
+    const imagemUrl = await sut.upload({ key: 'any key', file })
+
+    expect(imagemUrl).toBe(`https://${bucket}.s3.amazon.com/any%20key`)
+  })
+
+  it('should rethrow if putObject throws', async () => {
+    const error = new Error('upload_error')
+    putObjectPromiseSpy.mockRejectedValueOnce(error)
+
+    const promise = sut.upload({ key, file })
+
+    await expect(promise).rejects.toThrow(error)
   })
 })
