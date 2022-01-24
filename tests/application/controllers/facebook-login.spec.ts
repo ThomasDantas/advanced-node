@@ -1,5 +1,5 @@
 import { AuthenticationError } from '@/domain/entities/errors/authentication'
-import { FacebookLoginController } from '@/application/controllers'
+import { FacebookLoginController, Controller } from '@/application/controllers'
 import { UnauthorizedError } from '@/application/errors/http'
 import { RequiredStringValidator } from '@/application/validation'
 
@@ -16,6 +16,10 @@ describe('FacebookLoginController', () => {
 
   beforeEach(() => {
     sut = new FacebookLoginController(facebookAuth)
+  })
+
+  it('should extend Controller', async () => {
+    expect(sut).toBeInstanceOf(Controller)
   })
 
   it('should build validators correctly', async () => {
