@@ -5,12 +5,6 @@ export class ServerError extends Error {
     this.stack = error?.stack
   }
 }
-export class RequiredFieldError extends Error {
-  constructor (fieldName: string) {
-    super(`The field ${fieldName} is required`)
-    this.name = 'RequiredFieldError'
-  }
-}
 export class UnauthorizedError extends Error {
   constructor () {
     super('Unauthorized')
@@ -21,12 +15,5 @@ export class ForbiddendError extends Error {
   constructor () {
     super('Access denied')
     this.name = 'ForbiddendError'
-  }
-}
-
-export class InvalidMymeTypeError extends Error {
-  constructor (allowed: string[]) {
-    super(`Unsupported type. Allowed types: ${allowed.join(', ')}`)
-    this.name = 'InvalidMymeTypeError'
   }
 }
