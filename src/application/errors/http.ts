@@ -23,3 +23,10 @@ export class ForbiddendError extends Error {
     this.name = 'ForbiddendError'
   }
 }
+
+export class InvalidMymeTypeError extends Error {
+  constructor (allowed: string[]) {
+    super(`Unsupported type. Allowed types: ${allowed.join(', ')}`)
+    this.name = 'InvalidMymeTypeError'
+  }
+}

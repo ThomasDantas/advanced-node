@@ -4,7 +4,7 @@ describe('DeleteProfilePictureController', () => {
   let changeProfilePicture: jest.Mock
   let sut: DeleteProfilePictureController
 
-  beforeEach(() => {
+  beforeAll(() => {
     changeProfilePicture = jest.fn()
   })
 
