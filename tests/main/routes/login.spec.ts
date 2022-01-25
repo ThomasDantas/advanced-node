@@ -7,7 +7,7 @@ import { IBackup } from 'pg-mem'
 import request from 'supertest'
 import { getConnection } from 'typeorm'
 
-describe('LoginRoutes', () => {
+describe('Login Routes', () => {
   describe('POST /login/facebook', () => {
     let backup: IBackup
     const loadUserSpy = jest.fn()
