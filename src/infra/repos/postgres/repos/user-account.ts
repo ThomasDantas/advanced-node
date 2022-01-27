@@ -1,5 +1,5 @@
 import { PgUser } from '@/infra/repos/postgres/entities'
-import { PgConnection } from '@/infra/repos/postgres/helpers'
+import { PgRepository } from '@/infra/repos/postgres/repos/repository'
 import { LoadUserAccount, SaveFacebookAccount } from '@/domain/contracts/repos'
 
 type LoadInput = LoadUserAccount.Input
@@ -8,11 +8,9 @@ type LoadOutput = LoadUserAccount.Output
 type saveInput = SaveFacebookAccount.Input
 type saveOutput = SaveFacebookAccount.Output
 
-export class PgAccountUserRepository implements LoadUserAccount, SaveFacebookAccount {
-  constructor (private readonly connection: PgConnection = PgConnection.getInstance()) {}
-
+export class PgAccountUserRepository extends PgRepository implements LoadUserAccount, SaveFacebookAccount {
   async load ({ email }: LoadInput): Promise<LoadOutput> {
-    const pgUserRepo = this.connection.getRepository(PgUser)
+    const pgUserRepo = this.getRepository(PgUser)
     const pgUser = await pgUserRepo.findOne({ email })
     if (pgUser !== undefined) {
       return {
@@ -23,7 +21,7 @@ export class PgAccountUserRepository implements LoadUserAccount, SaveFacebookAcc
   }
 
   async saveWithFacebook ({ id, name, email, facebookId }: saveInput): Promise<saveOutput> {
-    const pgUserRepo = this.connection.getRepository(PgUser)
+    const pgUserRepo = this.getRepository(PgUser)
     let resultId: string
     if (id === undefined) {
       const pgUser = await pgUserRepo.save({ email, name, facebookId })

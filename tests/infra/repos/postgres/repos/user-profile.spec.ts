@@ -2,6 +2,7 @@ import { PgUserProfileRepository } from '@/infra/repos/postgres/repos'
 import { PgUser } from '@/infra/repos/postgres/entities'
 import { makeFakeDb } from '@/tests/infra/repos/postgres/mocks'
 import { PgConnection } from '@/infra/repos/postgres/helpers'
+import { PgRepository } from '@/infra/repos/postgres/repos/repository'
 
 import { IBackup } from 'pg-mem'
 import { Repository } from 'typeorm'
@@ -26,6 +27,10 @@ describe('PgUserProfileRepository', () => {
   beforeEach(async () => {
     backup.restore()
     sut = new PgUserProfileRepository()
+  })
+
+  it('should return 403 if no authorization header is present', async () => {
+    expect(sut).toBeInstanceOf(PgRepository)
   })
 
   describe('savePicture', () => {
