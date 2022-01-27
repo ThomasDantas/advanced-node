@@ -1,23 +1,18 @@
-import { SaveUserPicture, LoadUserProfile } from '@/domain/contracts/repos'
 import { PgUser } from '@/infra/repos/postgres/entities'
+import { PgConnection } from '@/infra/repos/postgres/helpers'
+import { LoadUserProfile, SaveUserPicture } from '@/domain/contracts/repos'
 
-import { getRepository } from 'typeorm'
+export class PgUserProfileRepository implements SaveUserPicture, LoadUserProfile {
+  constructor (private readonly connection: PgConnection = PgConnection.getInstance()) {}
 
-type saveInput = SaveUserPicture.Input
-
-type loadInput = LoadUserProfile.Input
-type loadOutput = LoadUserProfile.Output
-export class PgUserProfileRepository implements SaveUserPicture {
-  async savePicture ({ id, pictureUrl, initials }: saveInput): Promise<void> {
-    const pgUserRepo = getRepository(PgUser)
+  async savePicture ({ id, pictureUrl, initials }: SaveUserPicture.Input): Promise<void> {
+    const pgUserRepo = this.connection.getRepository(PgUser)
     await pgUserRepo.update({ id: parseInt(id) }, { pictureUrl, initials })
   }
 
-  async load ({ id }: loadInput): Promise<loadOutput> {
-    const pgUserRepo = getRepository(PgUser)
+  async load ({ id }: LoadUserProfile.Input): Promise<LoadUserProfile.Output> {
+    const pgUserRepo = this.connection.getRepository(PgUser)
     const pgUser = await pgUserRepo.findOne({ id: parseInt(id) })
-    if (pgUser !== undefined) {
-      return { name: pgUser.name ?? undefined }
-    }
+    if (pgUser !== undefined) return { name: pgUser.name ?? undefined }
   }
 }

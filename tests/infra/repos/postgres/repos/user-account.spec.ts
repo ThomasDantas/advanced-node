@@ -1,23 +1,26 @@
 import { PgAccountUserRepository } from '@/infra/repos/postgres/repos'
 import { PgUser } from '@/infra/repos/postgres/entities'
 import { makeFakeDb } from '@/tests/infra/repos/postgres/mocks'
+import { PgConnection } from '@/infra/repos/postgres/helpers'
 
 import { IBackup } from 'pg-mem'
-import { getRepository, Repository, getConnection } from 'typeorm'
+import { Repository } from 'typeorm'
 
 describe('PgUserAccountRepository', () => {
   let sut: PgAccountUserRepository
+  let connection: PgConnection
   let pgUserRepo: Repository<PgUser>
   let backup: IBackup
 
   beforeAll(async () => {
     const db = await makeFakeDb([PgUser])
     backup = db.backup()
-    pgUserRepo = getRepository(PgUser)
+    connection = PgConnection.getInstance()
+    pgUserRepo = connection.getRepository(PgUser)
   })
 
   afterAll(async () => {
-    await getConnection().close()
+    await connection.disconnect()
   })
 
   beforeEach(async () => {
