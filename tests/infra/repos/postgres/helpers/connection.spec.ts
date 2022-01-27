@@ -1,3 +1,5 @@
+import { PgConnection, ConnectionNotFoundError } from '@/infra/repos/postgres/helpers'
+
 import { createConnection, getConnectionManager, getConnection } from 'typeorm'
 import { mocked } from 'ts-jest/utils'
 
@@ -10,25 +12,6 @@ jest.mock('typeorm', () => ({
   getConnectionManager: jest.fn()
 }))
 
-class PgConnection {
-  private static instance?: PgConnection
-  private constructor () {
-
-  }
-
-  static getInstance (): PgConnection {
-    if (PgConnection.instance === undefined) PgConnection.instance = new PgConnection()
-    return PgConnection.instance
-  }
-
-  async connect (): Promise<void> {
-    const connection = getConnectionManager().has('default')
-      ? getConnection()
-      : await createConnection()
-    connection.createQueryRunner()
-  }
-}
-
 describe('PgConnection', () => {
   let sut: PgConnection
   let getConnectionManagerSpy: jest.Mock
@@ -36,20 +19,23 @@ describe('PgConnection', () => {
   let createConnectionSpy: jest.Mock
   let hasSpy: jest.Mock
   let getConnectionSpy: jest.Mock
+  let closeSpy: jest.Mock
 
   beforeAll(() => {
     hasSpy = jest.fn().mockReturnValue(true)
+    closeSpy = jest.fn()
     getConnectionManagerSpy = jest.fn().mockReturnValue({
       has: hasSpy
     })
-    createQueryRunnerSpy = jest.fn()
+    createQueryRunnerSpy = jest.fn().mockReturnValue({})
     mocked(getConnectionManager).mockImplementation(getConnectionManagerSpy)
     createConnectionSpy = jest.fn().mockResolvedValue({
       createQueryRunner: createQueryRunnerSpy
     })
     mocked(createConnection).mockImplementation(createConnectionSpy)
     getConnectionSpy = jest.fn().mockReturnValue({
-      createQueryRunner: createQueryRunnerSpy
+      createQueryRunner: createQueryRunnerSpy,
+      close: closeSpy
     })
     mocked(getConnection).mockImplementation(getConnectionSpy)
   })
@@ -82,5 +68,20 @@ describe('PgConnection', () => {
     expect(getConnectionSpy).toHaveBeenCalledTimes(1)
     expect(createQueryRunnerSpy).toHaveBeenCalledWith()
     expect(createQueryRunnerSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should close connection', async () => {
+    await sut.connect()
+    await sut.disconnect()
+
+    expect(closeSpy).toHaveBeenCalledWith()
+    expect(closeSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should return ConnectionNotFoundError on disconnect if connection is not found', async () => {
+    const promise = sut.disconnect()
+
+    expect(closeSpy).not.toHaveBeenCalled()
+    await expect(promise).rejects.toThrow(new ConnectionNotFoundError())
   })
 })
